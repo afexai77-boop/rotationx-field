@@ -1,0 +1,46 @@
+
+name: Build AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v -keystore rotationx.jks -keyalg RSA -keysize 2048 -validity 10000 -storepass RotationX2025! -keypass RotationX2025! -dname "CN=RotationX, OU=Field, O=RotationX, L=Offshore, S=IT, C=IT" -alias rotationx
+
+      - name: Grant execute permission for gradlew
+        run: |
+          echo "This project uses gradle wrapper via gradle command"
+          ls -la
+
+      - name: Build AAB
+        run: |
+          cd app || true
+          # Create gradle wrapper if missing
+          if [ ! -f "../gradlew" ]; then
+            gradle wrapper
+          fi
+          cd ..
+          chmod +x gradlew || true
+          ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$PWD/rotationx.jks -Pandroid.injected.signing.store.password=RotationX2025! -Pandroid.injected.signing.key.alias=rotationx -Pandroid.injected.signing.key.password=RotationX2025! || gradle bundleRelease -Pandroid.injected.signing.store.file=$PWD/rotationx.jks -Pandroid.injected.signing.store.password=RotationX2025! -Pandroid.injected.signing.key.alias=rotationx -Pandroid.injected.signing.key.password=RotationX2025!
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
