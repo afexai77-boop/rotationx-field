@@ -13,12 +13,14 @@ jobs:
           java-version: 17
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      - name: Build AAB
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Generate Keystore and Build
         run: |
           keytool -genkey -v -keystore rotationx.jks -keyalg RSA -keysize 2048 -validity 10000 -storepass RotationX2025! -keypass RotationX2025! -dname "CN=RotationX, OU=Field, O=RotationX, L=Offshore, S=IT, C=IT" -alias rotationx
-          if [ ! -f "gradlew" ]; then gradle wrapper; fi
-          chmod +x gradlew || true
-          ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$PWD/rotationx.jks -Pandroid.injected.signing.store.password=RotationX2025! -Pandroid.injected.signing.key.alias=rotationx -Pandroid.injected.signing.key.password=RotationX2025! || gradle bundleRelease -Pandroid.injected.signing.store.file=$PWD/rotationx.jks -Pandroid.injected.signing.store.password=RotationX2025! -Pandroid.injected.signing.key.alias=rotationx -Pandroid.injected.signing.key.password=RotationX2025!
+          gradle wrapper --gradle-version 8.5
+          chmod +x gradlew
+          ./gradlew bundleRelease -Pandroid.injected.signing.store.file=$PWD/rotationx.jks -Pandroid.injected.signing.store.password=RotationX2025! -Pandroid.injected.signing.key.alias=rotationx -Pandroid.injected.signing.key.password=RotationX2025!
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
